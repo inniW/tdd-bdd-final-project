@@ -26,8 +26,9 @@ While debugging just these tests it's convenient to use this:
 import os
 import logging
 import unittest
+from random import randrange, choice as randchoice
 from decimal import Decimal
-from service.models import Product, Category, db
+from service.models import Product, Category, db, DataValidationError
 from service import app
 from tests.factories import ProductFactory
 
@@ -104,3 +105,209 @@ class TestProductModel(unittest.TestCase):
     #
     # ADD YOUR TEST CASES HERE
     #
+    def test_read_a_product(self):
+        """It should Read a product from the database"""
+        products = Product.all()
+        self.assertEqual(products, [])
+        prod_lst = []
+        n_prod = 3
+        for _ in range(n_prod):
+            prod_lst.append(ProductFactory())
+            prod_lst[-1].id = None
+            prod_lst[-1].create()
+            self.assertIsNotNone(prod_lst[-1].id)
+        # choose random product to read from db
+        i = randrange(n_prod)
+        # Read product by id, check that it matches the original in the list
+        app.logger.info(
+            f'Retrieving product {prod_lst[i].name} with id {prod_lst[i].id}')
+        prod_read = Product.find(prod_lst[i].id)
+        self.assertEqual(prod_read.name, prod_lst[i].name)
+        self.assertEqual(prod_read.description, prod_lst[i].description)
+        self.assertEqual(Decimal(prod_read.price), prod_lst[i].price)
+        self.assertEqual(prod_read.available, prod_lst[i].available)
+        self.assertEqual(prod_read.category, prod_lst[i].category)
+
+    def test_update_a_product(self):
+        """It should Update a product in the database"""
+        # Generate Product in the database
+        products = Product.all()
+        self.assertEqual(products, [])
+        product = ProductFactory()
+        product.id = None
+        app.logger.info(f'Creating product {product.name}')
+        product.create()
+        # Read product from the database before updating
+        product_db_orig = Product.find(product.id)
+        self.assertEqual(product_db_orig.description, product.description)
+        # Update product text
+        new_desc = 'I''m a litte teapot, short and stout, ' \
+            + 'here''s my handle, here''s my spout.'
+        self.assertNotEqual(new_desc, product.description)
+        product.description = new_desc
+        app.logger.info(f'Updating description of {product.name}')
+        product.update()
+        # Read updated product from the database and check description
+        self.assertEqual(len(Product.all()), 1)
+        product_db_altrd = Product.find(product.id)
+        self.assertEqual(product_db_altrd.description, new_desc)
+        # Set invalid id and check for DataValidationError
+        product.id = None
+        self.assertRaises(DataValidationError, product.update)
+
+    def test_delete_a_product(self):
+        """It should Delete a product in the database"""
+        # Generate Product in the database
+        products = Product.all()
+        self.assertEqual(products, [])
+        product = ProductFactory()
+        product.id = None
+        app.logger.info(f'Creating product {product.name}')
+        product.create()
+        self.assertEqual(len(Product.all()), 1)
+        app.logger.info(f'Deleting product {product.name}')
+        product.delete()
+        self.assertEqual(len(Product.all()), 0)
+
+    def test_list_all_products(self):
+        """It should List All products from the database"""
+        products = Product.all()
+        self.assertEqual(products, [])
+        # Generate five products
+        prod_lst = []
+        n_prod = 5
+        app.logger.info(f'Creating {n_prod} products')
+        for _ in range(n_prod):
+            prod_lst.append(ProductFactory())
+            prod_lst[-1].id = None
+            prod_lst[-1].create()
+            self.assertIsNotNone(prod_lst[-1].id)
+        # Read all products from the database
+        products = Product.all()
+        self.assertEqual(len(products), 5)
+
+    def test_find_product_by_name(self):
+        """It should Find a product by Name"""
+        products = Product.all()
+        self.assertEqual(products, [])
+        # Generate five products
+        prod_lst = []
+        n_prod = 5
+        app.logger.info(f'Creating {n_prod} products')
+        for _ in range(n_prod):
+            prod_lst.append(ProductFactory())
+            prod_lst[-1].id = None
+            prod_lst[-1].create()
+            self.assertIsNotNone(prod_lst[-1].id)
+        # Calculate number of occurences
+        name_srch = prod_lst[0].name
+        n_occurence = 0
+        for prod in prod_lst:
+            if prod.name == name_srch:
+                n_occurence += 1
+        # Find products by name and check for correct number and name
+        products_fnd = Product.find_by_name(name_srch)
+        self.assertEqual(products_fnd.count(), n_occurence)
+        for prod_fnd in products_fnd:
+            self.assertEqual(prod_fnd.name, name_srch)
+
+    def test_find_product_by_availability(self):
+        """It should Find a product by Availability"""
+        products = Product.all()
+        self.assertEqual(products, [])
+        # Generate ten products
+        prod_lst = []
+        n_prod = 10
+        app.logger.info(f'Creating {n_prod} products')
+        for _ in range(n_prod):
+            prod_lst.append(ProductFactory())
+            prod_lst[-1].id = None
+            prod_lst[-1].create()
+            self.assertIsNotNone(prod_lst[-1].id)
+        # Calculate number of occurences
+        avail_srch = prod_lst[0].available
+        n_occurence = 0
+        for prod in prod_lst:
+            if prod.available == avail_srch:
+                n_occurence += 1
+        # Find products by availability
+        # and check for correct number and availability
+        products_fnd = Product.find_by_availability(avail_srch)
+        self.assertEqual(products_fnd.count(), n_occurence)
+        for prod_fnd in products_fnd:
+            self.assertEqual(prod_fnd.available, avail_srch)
+
+    def test_find_product_by_category(self):
+        """It should Find a product by Category"""
+        products = Product.all()
+        self.assertEqual(products, [])
+        # Generate ten products
+        prod_lst = []
+        n_prod = 10
+        app.logger.info(f'Creating {n_prod} products')
+        for _ in range(n_prod):
+            prod_lst.append(ProductFactory())
+            prod_lst[-1].id = None
+            prod_lst[-1].create()
+            self.assertIsNotNone(prod_lst[-1].id)
+        # Calculate number of occurences
+        ctgry_srch = prod_lst[0].category
+        n_occurence = 0
+        for prod in prod_lst:
+            if prod.category == ctgry_srch:
+                n_occurence += 1
+        # Find products by category
+        # and check for correct number and category
+        products_fnd = Product.find_by_category(ctgry_srch)
+        self.assertEqual(products_fnd.count(), n_occurence)
+        for prod_fnd in products_fnd:
+            self.assertEqual(prod_fnd.category, ctgry_srch)
+
+    def test_find_product_by_price(self):
+        """It should Find a product by Price"""
+        products = Product.all()
+        self.assertEqual(products, [])
+        # Generate ten products
+        prod_lst = []
+        n_prod = 10
+        app.logger.info(f'Creating {n_prod} products')
+        for _ in range(n_prod):
+            prod_lst.append(ProductFactory())
+            prod_lst[-1].id = None
+            prod_lst[-1].create()
+            self.assertIsNotNone(prod_lst[-1].id)
+        # Calculate number of occurences
+        price_srch = prod_lst[0].price
+        n_occurence = 0
+        for prod in prod_lst:
+            if prod.price == price_srch:
+                n_occurence += 1
+        # Find products by price
+        # and check for correct number and price
+        products_fnd = Product.find_by_price(price_srch)
+        self.assertEqual(products_fnd.count(), n_occurence)
+        for prod_fnd in products_fnd:
+            self.assertEqual(prod_fnd.price, price_srch)
+        # check correct processing when price provided as string
+        products_fnd = Product.find_by_price(str(price_srch))
+        self.assertEqual(products_fnd.count(), n_occurence)
+
+    def test_deserialize_a_product(self):
+        """It should Deserialize a dict to a product"""
+        product = Product(name="Fedora", description="A red hat", price=12.50, available=True, category=Category.CLOTHS)
+        prod_dict = product.serialize()
+        prod_deserialized = ProductFactory()
+        prod_deserialized.id = None
+        prod_deserialized.deserialize(prod_dict)
+        self.assertEqual(prod_deserialized.id, product.id)
+        self.assertEqual(prod_deserialized.name, product.name)
+        self.assertEqual(prod_deserialized.description, product.description)
+        self.assertEqual(prod_deserialized.available, product.available)
+        self.assertEqual(prod_deserialized.price, product.price)
+        self.assertEqual(prod_deserialized.category, product.category)
+        # test for DataValiationError on wrong available and category types
+        for k, v in {'available': 42, 'category': 'fish'}.items():
+            self.assertRaises(
+                DataValidationError, 
+                lambda: prod_deserialized.deserialize(prod_dict | {k: v}))
+
