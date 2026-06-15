@@ -146,6 +146,15 @@ def put_products(product_id):
 ######################################################################
 
 
-#
-# PLACE YOUR CODE TO DELETE A PRODUCT HERE
-#
+@app.route("/products/<int:product_id>", methods=["DELETE"])
+def delete_products(product_id):
+    """
+    Deletes a Product
+    This endpoint will delete a Product based the provided id
+    """
+    app.logger.info(f"Request to Delete Product with id {product_id}...")
+    product = Product.find(product_id)
+    if product == [] or product is None:
+        return '', status.HTTP_404_NOT_FOUND
+    product.delete()
+    return "", status.HTTP_204_NO_CONTENT

@@ -178,7 +178,7 @@ class TestProductRoutes(TestCase):
 
     def test_get_product_not_found(self):
         """It should Throw an Error on Read request with invalid id"""
-        # Check for error, when wrong id is used (databes is empty)
+        # Check for error, when wrong id is used (database is empty)
         response_err = self.client.get(f'{BASE_URL}/42')
         self.assertEqual(response_err.status_code, status.HTTP_404_NOT_FOUND)
 
@@ -218,8 +218,28 @@ class TestProductRoutes(TestCase):
 
     def test_update_product_not_found(self):
         """It should Throw an Error on Update request with invalid id"""
-        # Check for error, when wrong id is used (databes is empty)
+        # Check for error, when wrong id is used (database is empty)
         response_err = self.client.put(f'{BASE_URL}/42', json="arbitrary")
+        self.assertEqual(response_err.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_delete_a_product(self):
+        """It should Delete a product"""
+        # Create product, check that reading works
+        lst_products = self._create_products(1)
+        test_product = lst_products[0]
+        response = self.client.get(f'{BASE_URL}/{test_product.id}')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # Delete product, check correct response
+        response = self.client.delete(f'{BASE_URL}/{test_product.id}')
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        # Check that product cannot be read anymore after deletion
+        response = self.client.get(f'{BASE_URL}/{test_product.id}')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_delete_product_not_found(self):
+        """It should Throw an Error on Delete request with invalid id"""
+        # Check for error, when wrong id is used (database is empty)
+        response_err = self.client.delete(f'{BASE_URL}/42')
         self.assertEqual(response_err.status_code, status.HTTP_404_NOT_FOUND)
 
     def sproinx(self):
