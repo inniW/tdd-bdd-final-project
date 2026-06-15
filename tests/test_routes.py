@@ -216,6 +216,12 @@ class TestProductRoutes(TestCase):
         self.assertEqual(new_product["available"], test_product.available)
         self.assertEqual(new_product["category"], test_product.category.name)
 
+    def test_update_product_not_found(self):
+        """It should Throw an Error on Update request with invalid id"""
+        # Check for error, when wrong id is used (databes is empty)
+        response_err = self.client.put(f'{BASE_URL}/42', json="arbitrary")
+        self.assertEqual(response_err.status_code, status.HTTP_404_NOT_FOUND)
+
     def sproinx(self):
         raise NotImplementedError('Updating a product not implemented yet.')
 
