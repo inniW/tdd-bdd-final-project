@@ -182,6 +182,43 @@ class TestProductRoutes(TestCase):
         response_err = self.client.get(f'{BASE_URL}/42')
         self.assertEqual(response_err.status_code, status.HTTP_404_NOT_FOUND)
 
+    def test_update_a_product(self):
+        """It should Update an existing product"""
+        # Create list of products,read first element
+        lst_products = self._create_products(1)
+        test_product = lst_products[0]
+        # Change product properties, call update
+        test_product.name += ' ' + test_product.name
+        test_product.description = test_product.description[-1::-1]
+        test_product.price += test_product.price
+        test_product.available = not test_product.available
+        response = self.client.put(f'{BASE_URL}/{test_product.id}',
+                                   json=test_product.serialize())
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        # Check if the response data is correct
+        new_product = response.get_json()
+        self.assertEqual(new_product["id"], test_product.id)
+        self.assertEqual(new_product["name"], test_product.name)
+        self.assertEqual(new_product["description"], test_product.description)
+        self.assertEqual(Decimal(new_product["price"]), test_product.price)
+        self.assertEqual(new_product["available"], test_product.available)
+        self.assertEqual(new_product["category"], test_product.category.name)
+
+        # Check via read request whether stored data is correct
+        response = self.client.get(f'{BASE_URL}/{test_product.id}')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        new_product = response.get_json()
+        self.assertEqual(new_product["id"], test_product.id)
+        self.assertEqual(new_product["name"], test_product.name)
+        self.assertEqual(new_product["description"], test_product.description)
+        self.assertEqual(Decimal(new_product["price"]), test_product.price)
+        self.assertEqual(new_product["available"], test_product.available)
+        self.assertEqual(new_product["category"], test_product.category.name)
+
+    def sproinx(self):
+        raise NotImplementedError('Updating a product not implemented yet.')
+
     ######################################################################
     # Utility functions
     ######################################################################

@@ -120,9 +120,26 @@ def get_products(product_id):
 # U P D A T E   A   P R O D U C T
 ######################################################################
 
-#
-# PLACE YOUR CODE TO UPDATE A PRODUCT HERE
-#
+@app.route("/products/<int:product_id>", methods=["PUT"])
+def put_products(product_id):
+    """
+    Updates a Product
+    This endpoint will Update a Product based the provided id
+    """
+    # Read original product data from database
+    app.logger.info(f"Request to Update Product with id {product_id}...")
+    product = Product.find(product_id)
+    if product == [] or product is None:
+        return '', status.HTTP_404_NOT_FOUND
+    # Update product with request data and return updated data
+    data = product.serialize()
+    new_data = request.get_json()
+    data |= new_data
+    app.logger.info(f"Updating Product {product_id} - {product.name}")
+    product.deserialize(data)
+    product.update()
+    message = product.serialize()
+    return jsonify(message), status.HTTP_200_OK
 
 ######################################################################
 # D E L E T E   A   P R O D U C T
