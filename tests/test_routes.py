@@ -28,6 +28,7 @@ import os
 import logging
 from decimal import Decimal
 from unittest import TestCase
+from urllib.parse import quote_plus
 from service import app
 from service.common import status
 from service.models import db, init_db, Product
@@ -159,9 +160,9 @@ class TestProductRoutes(TestCase):
         response = self.client.post(BASE_URL, data={}, content_type="plain/text")
         self.assertEqual(response.status_code, status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
 
-    #
-    # ADD YOUR TEST CASES HERE
-    #
+    # ----------------------------------------------------------
+    # TEST READ
+    # ----------------------------------------------------------
     def test_get_product(self):
         """It should Read a Product"""
         # Create list of products, check that first element is read correctly
@@ -182,6 +183,9 @@ class TestProductRoutes(TestCase):
         response_err = self.client.get(f'{BASE_URL}/42')
         self.assertEqual(response_err.status_code, status.HTTP_404_NOT_FOUND)
 
+    # ----------------------------------------------------------
+    # TEST UPDATE
+    # ----------------------------------------------------------
     def test_update_a_product(self):
         """It should Update an existing product"""
         # Create list of products,read first element
@@ -222,6 +226,9 @@ class TestProductRoutes(TestCase):
         response_err = self.client.put(f'{BASE_URL}/42', json="arbitrary")
         self.assertEqual(response_err.status_code, status.HTTP_404_NOT_FOUND)
 
+    # ----------------------------------------------------------
+    # TEST DELETE
+    # ----------------------------------------------------------
     def test_delete_a_product(self):
         """It should Delete a product"""
         # Create product, check that reading works
@@ -241,6 +248,55 @@ class TestProductRoutes(TestCase):
         # Check for error, when wrong id is used (database is empty)
         response_err = self.client.delete(f'{BASE_URL}/42')
         self.assertEqual(response_err.status_code, status.HTTP_404_NOT_FOUND)
+
+    # ----------------------------------------------------------
+    # TEST LIST
+    # ----------------------------------------------------------
+    def test_list_all_products(self):
+        """It should List all products"""
+        # Create bunch of products
+        n_prod = 10
+        lst_products = self._create_products(n_prod)
+        # List all products, check for correct status and content
+        response = self.client.get(f'{BASE_URL}')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        lst_products_ret = response.get_json()
+        self.assertEqual(len(lst_products_ret), len(lst_products))
+        for prod_read, prod_orig in zip(lst_products_ret, lst_products):
+            self.assertEqual(prod_read["id"], prod_orig.id)
+            self.assertEqual(prod_read["name"], prod_orig.name)
+            self.assertEqual(prod_read["description"], prod_orig.description)
+            self.assertEqual(Decimal(prod_read["price"]), prod_orig.price)
+            self.assertEqual(prod_read["available"], prod_orig.available)
+            self.assertEqual(prod_read["category"], prod_orig.category.name)
+
+    def test_list_products_by_name(self):
+        """It should List products with the provided name"""
+        # Create bunch of products, select name and count occurences
+        n_prod = 10
+        lst_products = self._create_products(n_prod)
+        name = lst_products[0].name
+        same_name = [product.name==name for product in lst_products]
+        count = sum(same_name)
+        # List all products, check for correct status and length
+        response = self.client.get(f'{BASE_URL}',
+                                   query_string=f"name={quote_plus(name)}")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        lst_products_ret = response.get_json()
+        self.assertEqual(len(lst_products_ret), count)
+        i_ret = 0
+        for i_orig, is_name in enumerate(same_name):
+            if not is_name:
+                continue
+            prod_read = lst_products_ret[i_ret]
+            i_ret += 1
+            prod_orig = lst_products[i_orig]
+            self.assertEqual(prod_read["id"], prod_orig.id)
+            self.assertEqual(prod_read["name"], prod_orig.name)
+            self.assertEqual(prod_read["description"], prod_orig.description)
+            self.assertEqual(Decimal(prod_read["price"]), prod_orig.price)
+            self.assertEqual(prod_read["available"], prod_orig.available)
+            self.assertEqual(prod_read["category"], prod_orig.category.name)
 
     def sproinx(self):
         raise NotImplementedError('Updating a product not implemented yet.')
