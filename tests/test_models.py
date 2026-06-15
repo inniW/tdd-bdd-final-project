@@ -308,6 +308,5 @@ class TestProductModel(unittest.TestCase):
         # test for DataValiationError on wrong available and category types
         for k, v in {'available': 42, 'category': 'fish'}.items():
             self.assertRaises(
-                DataValidationError, 
+                DataValidationError,
                 lambda: prod_deserialized.deserialize(prod_dict | {k: v}))
-
