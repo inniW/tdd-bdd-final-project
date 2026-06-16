@@ -104,7 +104,11 @@ def step_impl(context, element_name):
 # to get the element id of any button
 ##################################################################
 
-## UPDATE CODE HERE ##
+@when(u'I press the "{element_name}" button')
+def step_impl(context, element_name):
+    element_id = element_name.lower().replace(' ', '_') + "-btn"
+    element = context.driver.find_element(By.ID, element_id)
+    element.click()
 
 ##################################################################
 # This code works because of the following naming convention:
@@ -132,3 +136,38 @@ def step_impl(context, element_name, text_string):
     )
     element.clear()
     element.send_keys(text_string)
+
+
+@then(u'I should see "{hrmpf}" in the results')
+def step_impl(context, hrmpf):
+    found = WebDriverWait(context.driver, context.wait_seconds).until(
+        expected_conditions.text_to_be_present_in_element(
+            (By.ID, 'search_results'),
+            hrmpf
+        )
+    )
+    assert(found)
+
+@then(u'I should not see "{hrmpf}" in the results')
+def step_impl(context, hrmpf):
+    element = context.driver.find_element(By.ID, 'search_results')
+    assert(hrmpf not in element.text)
+
+@then(u'I should see the message "{abrakadabra}"')
+def step_impl(context, abrakadabra):
+    found = WebDriverWait(context.driver, context.wait_seconds).until(
+        expected_conditions.text_to_be_present_in_element(
+            (By.ID, 'flash_message'),
+            abrakadabra
+        )
+    )
+    assert(found)
+
+@when(u'i set the "Category" dropdown to "CLOTHS"')
+def step_impl(context):
+    raise NotImplementedError(u'STEP: When i set the "Category" dropdown to "CLOTHS"')
+
+
+@when(u'i set the "Available" dropdown to "True"')
+def step_impl(context):
+    raise NotImplementedError(u'STEP: When i set the "Available" dropdown to "True"')
