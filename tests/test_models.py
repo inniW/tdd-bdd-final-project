@@ -296,17 +296,21 @@ class TestProductModel(unittest.TestCase):
         """It should Deserialize a dict to a product"""
         product = Product(name="Fedora", description="A red hat", price=12.50, available=True, category=Category.CLOTHS)
         prod_dict = product.serialize()
-        prod_deserialized = ProductFactory()
-        prod_deserialized.id = None
-        prod_deserialized.deserialize(prod_dict)
-        self.assertEqual(prod_deserialized.id, product.id)
-        self.assertEqual(prod_deserialized.name, product.name)
-        self.assertEqual(prod_deserialized.description, product.description)
-        self.assertEqual(prod_deserialized.available, product.available)
-        self.assertEqual(prod_deserialized.price, product.price)
-        self.assertEqual(prod_deserialized.category, product.category)
+        prod_tst = ProductFactory()
+        prod_tst.id = None
+        prod_tst.deserialize(prod_dict)
+        self.assertEqual(prod_tst.id, product.id)
+        self.assertEqual(prod_tst.name, product.name)
+        self.assertEqual(prod_tst.description, product.description)
+        self.assertEqual(prod_tst.available, product.available)
+        self.assertEqual(prod_tst.price, product.price)
+        self.assertEqual(prod_tst.category, product.category)
         # test for DataValiationError on wrong available and category types
-        for k, v in {'available': 42, 'category': 'fish'}.items():
+        tests = {'available': 42, 'category': 'fish'}
+        for k, v in tests.items():
             self.assertRaises(
                 DataValidationError,
-                lambda: prod_deserialized.deserialize(prod_dict | {k: v}))
+                lambda: prod_tst.deserialize(prod_dict | {k: v}))
+        self.assertRaises(
+            DataValidationError,
+            lambda: prod_tst.deserialize(prod_dict | {'category': {'a': 'b', 'c': 42}}))
