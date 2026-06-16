@@ -162,12 +162,3 @@ def step_impl(context, abrakadabra):
         )
     )
     assert(found)
-
-@when(u'i set the "Category" dropdown to "CLOTHS"')
-def step_impl(context):
-    raise NotImplementedError(u'STEP: When i set the "Category" dropdown to "CLOTHS"')
-
-
-@when(u'i set the "Available" dropdown to "True"')
-def step_impl(context):
-    raise NotImplementedError(u'STEP: When i set the "Available" dropdown to "True"')
