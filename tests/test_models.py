@@ -26,7 +26,7 @@ While debugging just these tests it's convenient to use this:
 import os
 import logging
 import unittest
-from random import randrange, choice as randchoice
+from random import randrange
 from decimal import Decimal
 from service.models import Product, Category, db, DataValidationError
 from service import app
@@ -218,7 +218,7 @@ class TestProductModel(unittest.TestCase):
         # Generate ten products
         prod_lst = []
         n_prod = 10
-        app.logger.info(f'Creating {n_prod} products')
+        app.logger.info('Creating %d products', n_prod)
         for _ in range(n_prod):
             prod_lst.append(ProductFactory())
             prod_lst[-1].id = None
@@ -244,7 +244,7 @@ class TestProductModel(unittest.TestCase):
         # Generate ten products
         prod_lst = []
         n_prod = 10
-        app.logger.info(f'Creating {n_prod} products')
+        app.logger.info('Creating %d products', n_prod)
         for _ in range(n_prod):
             prod_lst.append(ProductFactory())
             prod_lst[-1].id = None
@@ -270,7 +270,7 @@ class TestProductModel(unittest.TestCase):
         # Generate ten products
         prod_lst = []
         n_prod = 10
-        app.logger.info(f'Creating {n_prod} products')
+        app.logger.info('Creating %d products', n_prod)
         for _ in range(n_prod):
             prod_lst.append(ProductFactory())
             prod_lst[-1].id = None
@@ -307,10 +307,10 @@ class TestProductModel(unittest.TestCase):
         self.assertEqual(prod_tst.category, product.category)
         # test for DataValiationError on wrong available and category types
         tests = {'available': 42, 'category': 'fish'}
-        for k, v in tests.items():
+        for k, val in tests.items():
             self.assertRaises(
                 DataValidationError,
-                lambda: prod_tst.deserialize(prod_dict | {k: v}))
+                lambda: prod_tst.deserialize(prod_dict | {k: val}))
         self.assertRaises(
             DataValidationError,
             lambda: prod_tst.deserialize(prod_dict | {'category': {'a': 'b', 'c': 42}}))

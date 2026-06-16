@@ -60,7 +60,6 @@ class TestProductRoutes(TestCase):
         # Set up the test database
         app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URI
         app.logger.setLevel(logging.CRITICAL)
-        app.logger.setLevel(logging.NOTSET)
         logging.basicConfig(level=logging.DEBUG)
         init_db(app)
 
@@ -99,13 +98,13 @@ class TestProductRoutes(TestCase):
     # Utility function to test for equal product lists
     ############################################################
     def _test_equality_product_lists(
-        self, lst_products_dict: list = [], lst_products_prod: list = []):
+            self, lst_products_dict: list, lst_products_prod: list):
         """Test returned list of dicts against products' list."""
         # Generate index lists, in case indices are not ordered
         id_dict = [prod["id"] for prod in lst_products_dict]
         id_prod = [prod.id for prod in lst_products_prod]
-        logging.debug(f"ids: [{len(lst_products_dict)}] {id_dict} " \
-                      +f"<-> [{len(lst_products_prod)}] {id_prod}")
+        logging.debug(f"ids: [{len(lst_products_dict)}] {id_dict} "
+                      + f"<-> [{len(lst_products_prod)}] {id_prod}")
         # Check that both lists are equal (not necessarily in same order)
         self.assertEqual(len(lst_products_dict), len(lst_products_prod))
         for prod_orig in lst_products_prod:
@@ -117,10 +116,10 @@ class TestProductRoutes(TestCase):
             self.assertEqual(prod_read["available"], prod_orig.available)
             self.assertEqual(prod_read["category"], prod_orig.category.name)
 
-
     ############################################################
     #  T E S T   C A S E S
     ############################################################
+
     def test_index(self):
         """It should return the index page"""
         response = self.client.get("/")
@@ -193,7 +192,7 @@ class TestProductRoutes(TestCase):
         # Create list of products, check that first element is read correctly
         lst_products = self._create_products(1)
         test_product = lst_products[0]
-        logging.debug(f"Read Product with id {test_product.id}")
+        logging.debug("Read Product with id %d", test_product.id)
         response = self.client.get(f'{BASE_URL}/{test_product.id}')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         new_product = response.get_json()
@@ -206,7 +205,7 @@ class TestProductRoutes(TestCase):
     def test_get_product_not_found(self):
         """It should Throw an Error on Read request with invalid id"""
         # Check for error, when wrong id is used (database is empty)
-        logging.debug(f"Read Product with invalid id")
+        logging.debug("Read Product with invalid id")
         response_err = self.client.get(f'{BASE_URL}/42')
         self.assertEqual(response_err.status_code, status.HTTP_404_NOT_FOUND)
 
@@ -223,7 +222,7 @@ class TestProductRoutes(TestCase):
         test_product.description = test_product.description[-1::-1]
         test_product.price += test_product.price
         test_product.available = not test_product.available
-        logging.debug(f"Update Product with id {test_product.id}")
+        logging.debug("Update Product with id %d", test_product.id)
         response = self.client.put(f'{BASE_URL}/{test_product.id}',
                                    json=test_product.serialize())
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -251,7 +250,7 @@ class TestProductRoutes(TestCase):
     def test_update_product_not_found(self):
         """It should Throw an Error on Update request with invalid id"""
         # Check for error, when wrong id is used (database is empty)
-        logging.debug(f"Update Product with invalid id")
+        logging.debug("Update Product with invalid id")
         response_err = self.client.put(f'{BASE_URL}/42', json="arbitrary")
         self.assertEqual(response_err.status_code, status.HTTP_404_NOT_FOUND)
 
@@ -263,7 +262,7 @@ class TestProductRoutes(TestCase):
         # Create product, check that reading works
         lst_products = self._create_products(1)
         test_product = lst_products[0]
-        logging.debug(f"Delete Product with id {test_product.id}")
+        logging.debug("Delete Product with id %d", test_product.id)
         response = self.client.get(f'{BASE_URL}/{test_product.id}')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         # Delete product, check correct response
@@ -276,7 +275,7 @@ class TestProductRoutes(TestCase):
     def test_delete_product_not_found(self):
         """It should Throw an Error on Delete request with invalid id"""
         # Check for error, when wrong id is used (database is empty)
-        logging.debug(f"Delete Product with invalid id")
+        logging.debug("Delete Product with invalid id")
         response_err = self.client.delete(f'{BASE_URL}/42')
         self.assertEqual(response_err.status_code, status.HTTP_404_NOT_FOUND)
 
@@ -289,7 +288,7 @@ class TestProductRoutes(TestCase):
         n_prod = 10
         lst_products = self._create_products(n_prod)
         # List all products, check for correct status and content
-        logging.debug(f"List all products")
+        logging.debug("List all products")
         response = self.client.get(f'{BASE_URL}')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         lst_products_ret = response.get_json()
@@ -303,9 +302,9 @@ class TestProductRoutes(TestCase):
         lst_products = self._create_products(n_prod)
         name = lst_products[0].name
         lst_products_name = \
-            [product for product in lst_products if product.name==name]
+            [product for product in lst_products if product.name == name]
         # List all products, check for correct status and length
-        logging.debug(f"List products with name: {name}")
+        logging.debug("List products with name: %s", name)
         response = self.client.get(f'{BASE_URL}',
                                    query_string=f"name={quote_plus(name)}")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -320,10 +319,10 @@ class TestProductRoutes(TestCase):
         lst_products = self._create_products(n_prod)
         ctgry = lst_products[0].category
         lst_products_ctgry = \
-            [product for product in lst_products if product.category==ctgry]
+            [product for product in lst_products if product.category == ctgry]
         count = len(lst_products_ctgry)
         # List all products, check for correct status and length
-        logging.debug(f"List {count} products with category: {ctgry}")
+        logging.debug("List %d products with category: %s", count, ctgry)
         response = self.client.get(
             f'{BASE_URL}',
             query_string=f'category={ctgry.name}'
@@ -340,10 +339,10 @@ class TestProductRoutes(TestCase):
         lst_products = self._create_products(n_prod)
         avail = lst_products[0].available
         lst_products_avail = \
-            [prod for prod in lst_products if prod.available==avail]
+            [prod for prod in lst_products if prod.available == avail]
         count = len(lst_products_avail)
         # List all products, check for correct status and length
-        logging.debug(f"List {count} products with availability: {avail}")
+        logging.debug("List %d products with availability: %s", count, str(avail))
         response = self.client.get(
             f'{BASE_URL}',
             query_string=f'available={avail}'

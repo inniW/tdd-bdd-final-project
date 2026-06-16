@@ -105,8 +105,8 @@ def list_products():
     name = request.args.get("name")
     category = request.args.get("category")
     available = request.args.get("available")
-    
-    lst_products=[]
+
+    lst_products = []
     if name:
         app.logger.info(f"...Find by name: {name}")
         lst_products = Product.find_by_name(name)
@@ -119,15 +119,16 @@ def list_products():
         app.logger.info(f"...Find by availability: {available}")
         lst_products = Product.find_by_availability(available)
     else:
-        app.logger.info(f"...List all")
+        app.logger.info("...List all")
         lst_products = Product.all()
-    
+
     message = [product.serialize() for product in lst_products]
     return message, status.HTTP_200_OK
 
 ######################################################################
 # R E A D   A   P R O D U C T
 ######################################################################
+
 
 @app.route("/products/<int:product_id>", methods=["GET"])
 def get_products(product_id):
@@ -145,6 +146,7 @@ def get_products(product_id):
 ######################################################################
 # U P D A T E   A   P R O D U C T
 ######################################################################
+
 
 @app.route("/products/<int:product_id>", methods=["PUT"])
 def put_products(product_id):
