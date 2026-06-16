@@ -60,7 +60,8 @@ class TestProductRoutes(TestCase):
         # Set up the test database
         app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URI
         app.logger.setLevel(logging.CRITICAL)
-        app.logger.setLevel(logging.INFO)
+        app.logger.setLevel(logging.NOTSET)
+        logging.basicConfig(level=logging.DEBUG)
         init_db(app)
 
     @classmethod
@@ -93,6 +94,29 @@ class TestProductRoutes(TestCase):
             test_product.id = new_product["id"]
             products.append(test_product)
         return products
+
+    ############################################################
+    # Utility function to test for equal product lists
+    ############################################################
+    def _test_equality_product_lists(
+        self, lst_products_dict: list = [], lst_products_prod: list = []):
+        """Test returned list of dicts against products' list."""
+        # Generate index lists, in case indices are not ordered
+        id_dict = [prod["id"] for prod in lst_products_dict]
+        id_prod = [prod.id for prod in lst_products_prod]
+        logging.debug(f"ids: [{len(lst_products_dict)}] {id_dict} " \
+                      +f"<-> [{len(lst_products_prod)}] {id_prod}")
+        # Check that both lists are equal (not necessarily in same order)
+        self.assertEqual(len(lst_products_dict), len(lst_products_prod))
+        for prod_orig in lst_products_prod:
+            prod_read = lst_products_dict[id_dict.index(prod_orig.id)]
+            self.assertEqual(prod_read["id"], prod_orig.id)
+            self.assertEqual(prod_read["name"], prod_orig.name)
+            self.assertEqual(prod_read["description"], prod_orig.description)
+            self.assertEqual(Decimal(prod_read["price"]), prod_orig.price)
+            self.assertEqual(prod_read["available"], prod_orig.available)
+            self.assertEqual(prod_read["category"], prod_orig.category.name)
+
 
     ############################################################
     #  T E S T   C A S E S
@@ -269,14 +293,8 @@ class TestProductRoutes(TestCase):
         response = self.client.get(f'{BASE_URL}')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         lst_products_ret = response.get_json()
-        self.assertEqual(len(lst_products_ret), len(lst_products))
-        for prod_read, prod_orig in zip(lst_products_ret, lst_products):
-            self.assertEqual(prod_read["id"], prod_orig.id)
-            self.assertEqual(prod_read["name"], prod_orig.name)
-            self.assertEqual(prod_read["description"], prod_orig.description)
-            self.assertEqual(Decimal(prod_read["price"]), prod_orig.price)
-            self.assertEqual(prod_read["available"], prod_orig.available)
-            self.assertEqual(prod_read["category"], prod_orig.category.name)
+        # Check that returned list matches product list
+        self._test_equality_product_lists(lst_products_ret, lst_products)
 
     def test_list_products_by_name(self):
         """It should List products with the provided name"""
@@ -284,28 +302,16 @@ class TestProductRoutes(TestCase):
         n_prod = 10
         lst_products = self._create_products(n_prod)
         name = lst_products[0].name
-        same_name = [product.name==name for product in lst_products]
-        count = sum(same_name)
+        lst_products_name = \
+            [product for product in lst_products if product.name==name]
         # List all products, check for correct status and length
         logging.debug(f"List products with name: {name}")
         response = self.client.get(f'{BASE_URL}',
                                    query_string=f"name={quote_plus(name)}")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         lst_products_ret = response.get_json()
-        self.assertEqual(len(lst_products_ret), count)
-        i_ret = 0
-        for i_orig, is_name in enumerate(same_name):
-            if not is_name:
-                continue
-            prod_read = lst_products_ret[i_ret]
-            i_ret += 1
-            prod_orig = lst_products[i_orig]
-            self.assertEqual(prod_read["id"], prod_orig.id)
-            self.assertEqual(prod_read["name"], prod_orig.name)
-            self.assertEqual(prod_read["description"], prod_orig.description)
-            self.assertEqual(Decimal(prod_read["price"]), prod_orig.price)
-            self.assertEqual(prod_read["available"], prod_orig.available)
-            self.assertEqual(prod_read["category"], prod_orig.category.name)
+        # Check that returned list matches name-reduced product list
+        self._test_equality_product_lists(lst_products_ret, lst_products_name)
 
     def test_list_products_by_category(self):
         """It should List products with the provided category"""
@@ -324,14 +330,8 @@ class TestProductRoutes(TestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         lst_products_ret = response.get_json()
-        self.assertEqual(len(lst_products_ret), len(lst_products_ctgry))
-        for prod_read, prod_orig in zip(lst_products_ret, lst_products_ctgry):
-            self.assertEqual(prod_read["id"], prod_orig.id)
-            self.assertEqual(prod_read["name"], prod_orig.name)
-            self.assertEqual(prod_read["description"], prod_orig.description)
-            self.assertEqual(Decimal(prod_read["price"]), prod_orig.price)
-            self.assertEqual(prod_read["available"], prod_orig.available)
-            self.assertEqual(prod_read["category"], prod_orig.category.name)
+        # Check that returned list matches category-reduced product list
+        self._test_equality_product_lists(lst_products_ret, lst_products_ctgry)
 
     def test_list_products_by_availability(self):
         """It should List products with the provided availability"""
@@ -350,17 +350,9 @@ class TestProductRoutes(TestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         lst_products_ret = response.get_json()
-        self.assertEqual(len(lst_products_ret), len(lst_products_avail))
-        for prod_read, prod_orig in zip(lst_products_ret, lst_products_avail):
-            self.assertEqual(prod_read["id"], prod_orig.id)
-            self.assertEqual(prod_read["name"], prod_orig.name)
-            self.assertEqual(prod_read["description"], prod_orig.description)
-            self.assertEqual(Decimal(prod_read["price"]), prod_orig.price)
-            self.assertEqual(prod_read["available"], prod_orig.available)
-            self.assertEqual(prod_read["category"], prod_orig.category.name)
+        # Check that returned list matches availability-reduced product list
+        self._test_equality_product_lists(lst_products_ret, lst_products_avail)
 
-    def sproinx(self):
-        raise NotImplementedError('not implemented yet.')
     ######################################################################
     # Utility functions
     ######################################################################
