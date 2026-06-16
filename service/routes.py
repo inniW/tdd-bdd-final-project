@@ -92,7 +92,7 @@ def create_products():
 
 
 ######################################################################
-# L I S T   A L L   P R O D U C T S
+# L I S T   P R O D U C T S
 ######################################################################
 
 @app.route("/products", methods=["GET"])
@@ -104,6 +104,7 @@ def list_products():
     app.logger.info("Request to List Products")
     name = request.args.get("name")
     category = request.args.get("category")
+    available = request.args.get("available")
     
     lst_products=[]
     if name:
@@ -114,6 +115,9 @@ def list_products():
         # create enum from string
         category_value = getattr(Category, category.upper())
         lst_products = Product.find_by_category(category_value)
+    elif available:
+        app.logger.info(f"...Find by availability: {available}")
+        lst_products = Product.find_by_availability(available)
     else:
         app.logger.info(f"...List all")
         lst_products = Product.all()

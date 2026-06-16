@@ -60,6 +60,7 @@ class TestProductRoutes(TestCase):
         # Set up the test database
         app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URI
         app.logger.setLevel(logging.CRITICAL)
+        app.logger.setLevel(logging.INFO)
         init_db(app)
 
     @classmethod
@@ -332,9 +333,34 @@ class TestProductRoutes(TestCase):
             self.assertEqual(prod_read["available"], prod_orig.available)
             self.assertEqual(prod_read["category"], prod_orig.category.name)
 
+    def test_list_products_by_availability(self):
+        """It should List products with the provided availability"""
+        # Create bunch of products, select availability and count occurences
+        n_prod = 10
+        lst_products = self._create_products(n_prod)
+        avail = lst_products[0].available
+        lst_products_avail = \
+            [prod for prod in lst_products if prod.available==avail]
+        count = len(lst_products_avail)
+        # List all products, check for correct status and length
+        logging.debug(f"List {count} products with availability: {avail}")
+        response = self.client.get(
+            f'{BASE_URL}',
+            query_string=f'available={avail}'
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        lst_products_ret = response.get_json()
+        self.assertEqual(len(lst_products_ret), len(lst_products_avail))
+        for prod_read, prod_orig in zip(lst_products_ret, lst_products_avail):
+            self.assertEqual(prod_read["id"], prod_orig.id)
+            self.assertEqual(prod_read["name"], prod_orig.name)
+            self.assertEqual(prod_read["description"], prod_orig.description)
+            self.assertEqual(Decimal(prod_read["price"]), prod_orig.price)
+            self.assertEqual(prod_read["available"], prod_orig.available)
+            self.assertEqual(prod_read["category"], prod_orig.category.name)
+
     def sproinx(self):
         raise NotImplementedError('not implemented yet.')
-
     ######################################################################
     # Utility functions
     ######################################################################
